@@ -1,15 +1,8 @@
 #!/usr/bin/python3
 
-
 """
 MQTT topics must start with: EricssonONE/esignum/
-
-
 Example: "EricssonONE/edallam/MQTT_Display/text"
-
-
-
-
 """
 
 from urllib.request import urlopen
@@ -22,6 +15,8 @@ import datetime
 import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 from personal import *
+from Battery import *
+from ThingSpeak import *
 
 
 #the callback function
@@ -124,7 +119,7 @@ def startit():
 
     while True:
         #try:
-        for x in arduinoMain:
+        for device in device_list:
             line = x.readline().decode().replace('\r\n','')
             print(line)
             if startwith(line, 'edallam/BATTERY1'):
@@ -393,4 +388,16 @@ def send2ThingSpeak():
         
 ##################################################################
 if __name__ == "__main__":
+    device_list = []
+    #ThingSpeak connection
+    thing_speak = ThingSpeak()
+    #Create Devices
+    battery_one = Battery(name="one", max_voltage=12.80)
+    battery_one.set_serial_conn(
+        serial.Serial('/dev/ttyACM0', 9600, timeout=100))
+    device_list.append(battery_one)
+    battery_two = Battery(name="two", max_voltage=12.00)
+    battery_two.set_serial_conn(
+        serial.Serial('/dev/ttyACM1', 9600, timeout=100))
+    device_list.append(battery_two)
     startit()
