@@ -2,7 +2,7 @@
 STOPPED = 0
 RUNNING = 1
 
-#ALARM LEVELS
+#Alarm Severity Values
 ALARM_NONE = 0
 ALARM_MINOR = 1
 ALARM_MAJOR = 2

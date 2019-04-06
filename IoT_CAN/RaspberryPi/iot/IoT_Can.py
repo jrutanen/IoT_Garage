@@ -6,7 +6,6 @@ Example: "EricssonONE/edallam/MQTT_Display/text"
 """
 
 from urllib.request import urlopen
-import serial
 import sys
 from time import sleep
 import json 
@@ -41,22 +40,6 @@ solar_lastReportedValue    = 0.0
 door_lastReportedValue     = 0
 # WATER
 water_lastReportedValue    = 0
-
-# ThingSpeak
-ThingSpeak_reportingCounter = 1
-ThingSpeak_unreportedChange = True
-field1_str = ''
-field2_str = ''
-field3_str = ''
-field4_str = ''
-field5_str = ''
-field6_str = ''
-field7_str = ''
-field8_str = ''
-
-class serialList:
-    def __init__(self):
-        self.arduinoList = []
 
 def startit():
     global ThingSpeak_reportingCounter
@@ -112,32 +95,6 @@ def publishMqttDisplay(topic, payload):
     
 ##################################################################
 # Main battery 
-def decode_battery1(line):
-    #print(line)
-    data = float(line[10:])
-    if isinstance(data, float):
-        return data
-    else:
-        return float(0.0) // Error
-
-def varning_battery1(data):
-    if isinstance(data, float):
-        return data
-    else:
-        return float(0.0) // Error
-   
-def publish_battery1(data):
-    diff = 0.1
-    global ThingSpeak_unreportedChange
-    global battery1_lastReportedValue
-    global field1_str
-    if abs(data-battery1_lastReportedValue) >= diff: 
-        ThingSpeak_unreportedChange = True
-        battery1_lastReportedValue = data
-        data = '%.2f' % data
-        field1_str = '&field1=%s' % (data)
-
-
 def signalk_battery1(data):
     diff = 0.1
     src_str = "115"
@@ -255,18 +212,9 @@ def publish_door(data):
         publishMqttDisplay("The Door on your boat just opened!")
 
 ##################################################################
-# Other functions
-##################################################################
-def startwith(line,tag):
-    if tag in line[0:9]:
-        return True
-    else:
-        return False
-
-##################################################################
 if __name__ == "__main__":
     #TODO: Create factory for creating device objects?
-    #Create Devices
+    #Create Two Battery Devices and start them
     battery_one = Battery(name="one", field="field1", max_voltage=12.80)
     battery_one.set_serial_conn(
         conn_port='/dev/ttyUSB0', conn_baudrate=9600, conn_timeout=100)
@@ -275,9 +223,6 @@ if __name__ == "__main__":
     battery_two.set_serial_conn(
         conn_port='/dev/ttyUSB1', conn_baudrate=9600, conn_timeout=100)
     battery_two.start()
-    sleep(120)
+    sleep(240)
     battery_one.stop()
     battery_two.stop()
-
-#    device_list.append(battery_two)
-#    startit()

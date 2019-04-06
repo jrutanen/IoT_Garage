@@ -2,6 +2,7 @@ from SerialDevice import *
 
 class Battery (SerialDevice):
     """Battery device
+    This class is used for devices that report battery voltage
     """
 
     voltage = 0
@@ -18,14 +19,21 @@ class Battery (SerialDevice):
         self.max_voltage = max_voltage
 
     def read(self):
+        """Reads data from serial port
+
+        Returns:
+        string: String that was received from serial connection
+       """
         voltage =\
             self.serial_conn.readline().decode().replace('\r\n', '')
         return voltage
 
-    def write(self, user_input):
-        self.input = user_input
-
     def set_alarm_severity(self, value):
+        """Sets alarm value for the device.
+        
+        Parameters:
+        value (string): raw data from the serial port as string
+       """
         value = float(value.split(";")[0])
         if value > 0.95*self.max_voltage:
             self.alarm_severity = ALARM_NONE
@@ -37,8 +45,14 @@ class Battery (SerialDevice):
             self.alarm_severity = ALARM_CRITICAL
 
     def publish(self, value):
-        #Battery will publish data to thingSpeak if values have changed
-        #or last update is more than 1 minute old
+        """Sends update to ThingSpeak server for battery level. Update
+        is sent only of the value has changed more than diff or minimum
+        update frequency is met.
+        
+        Parameters:
+        value (string): raw data from the serial port as string
+        """
+        #Check if we should send the update
         if self.publish_battery_data(value):
             #ThingSpeak connection
             thing_speak = ThingSpeak()
@@ -46,27 +60,44 @@ class Battery (SerialDevice):
             self.time_published = datetime.datetime.now()
 
     def publish_battery_data(self, value):
+        """Checks if
+        A: We have not sent any update to ThingSpeak previosly
+        B: If the value has changed more than diff
+        C: More than min_update_freq seconds is passed
+        D: Less than max_update_freq seconds is passed
+        
+        Parameters:
+        value (string): raw data from the serial port as string
+
+        Returns:
+        boolean: True is A, B or C, False otherwise
+        """
+        #Case A
         if self.time_published is None:
             return True
-        #current value is not the same as last measurement
+        #Case B
+        #Check that we have previous measurement
         if len(self.measurements) > 1:
+            #value is already added to the end of the measurements so
+            #comparison is between the current value and the second last
+            #value in the measurements list
             change = abs(float(value) - float(self.measurements[-2]))
-            value_changed = (change > self.diff) 
+            if (change > self.diff):
+                return True
         else:
-            value_changed = True
+            #No previous measurement
+            return True
 
-        #check if it's long time since last publish
+        #Case C & D
         time_after_publish = \
             (datetime.datetime.now()\
             - self.time_published).total_seconds()
 
+        if time_after_publish > self.min_publish_freq:
+            return True
+
         if time_after_publish < self.max_publish_freq:
             return False
 
-        old_data =  (time_after_publish > self.min_publish_freq)
-
-        #if value is changed or timer has expired
-        if value_changed or old_data:
-            return True
-
+        #Just in case none of the above conditions are met
         return False
