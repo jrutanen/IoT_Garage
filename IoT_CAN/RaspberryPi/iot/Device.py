@@ -27,9 +27,9 @@ class Device:
     def __init__(self, name):
         self.id = name
 
-    def set_serial_conn(self, conn_port, conn_speed, conn_timeout):
+    def set_serial_conn(self, conn_port, conn_baudrate, conn_timeout):
         self.serial_conn = Serial(port=conn_port,
-                                  baudrate=conn_speed,
+                                  baudrate=conn_baudrate,
                                   timeout=conn_timeout)
 
     def read(self):

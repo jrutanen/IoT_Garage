@@ -5,7 +5,6 @@ class ThingSpeak:
     thing_speak_reporting_counter = 0
     thing_speak_unreported_change = 0
     baseURL = ""
-    config = None
     thing_speak_fields = {
         "field1": "",
         "field2": "",
@@ -19,9 +18,9 @@ class ThingSpeak:
 
 
     def __init__(self):
-        self.config = getConfig()
-        self.name = name
-        self.thing_speak_fields = thing_speak_values
+        config = getConfig()
+#        self.name = name
+#        self.thing_speak_fields = thing_speak_values
         self.baseURL = config.ThingSpeak_BaseURL\
                        + 'api_key='\
                        + config.ThingSpeak_Write_API_key

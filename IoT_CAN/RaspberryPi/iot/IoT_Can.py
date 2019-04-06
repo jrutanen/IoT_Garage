@@ -100,11 +100,6 @@ def startit():
 
     config = getConfig()
 
-    arduino1 = serial.Serial('/dev/ttyACM0',9600,timeout=100)
-    arduino2 = serial.Serial('/dev/ttyACM1',9600,timeout=100)
-    arduino3 = serial.Serial('/dev/ttyACM2',9600,timeout=100)
-    arduinoMain = [arduino1, arduino2, arduino3]
-
     #Assigning the object attribute to the Callback Function
     client.will_set("edallam/mmsi/boat/status", payload="Offline - Will", qos=0, retain=True)
     client.username_pw_set(username = config.MQTT_auth['username'], password = config.MQTT_auth['username'])
@@ -120,48 +115,10 @@ def startit():
     while True:
         #try:
         for device in device_list:
-            line = x.readline().decode().replace('\r\n','')
+            line = device.read()
             print(line)
-            if startwith(line, 'edallam/BATTERY1'):
-                data = decode_battery1(line)
-                varning_battery1(data)
-                publish_battery1(data)
-                #signalk_battery1(data)
-            if startwith(line, 'edallam/BATTERY2'):
-                data = decode_battery1(line)
-                varning_battery1(data)
-                publish_battery1(data)
-            if startwith(line, 'SOLAR'):
-                data = decode_solar(line)
-                publish_solar(data)
-            if "ejacsve/Temp[0]" in line:
-                data = decode_input(line)
-                publish_display("Temperature", data)
-            if "egebant/Distance" in line:
-                data = decode_input(line)
-                publish_display("Distance", data)
-            if "erohsat/lock" in line:
-                data = decode_input(line)
-                publish_display("Lock", data)
-            if startwith(line, 'edallam/DOOR'):
-                data = decode_door(line)
-                publish_door(data)
-                
-            else:
-                print('No data received')
             send2ThingSpeak()      
-            #sleep(1)
             ThingSpeak_reportingCounter += 1
-            """
-        except:
-            print('Something went wrong. Retrying!')
-            try:
-                arduino1 = serial.Serial('/dev/ttyOP_devboard',9600,timeout=10)
-                print("Listening to: " + arduino1.name)
-            except:
-                print('Could not find arduino!')
-                sleep(10)
-            """    
 
 ##################################################################
 # Functions below
@@ -394,10 +351,10 @@ if __name__ == "__main__":
     #Create Devices
     battery_one = Battery(name="one", max_voltage=12.80)
     battery_one.set_serial_conn(
-        serial.Serial('/dev/ttyACM0', 9600, timeout=100))
+        conn_port='/dev/ttyUSB0', conn_baudrate=9600, conn_timeout=100)
     device_list.append(battery_one)
-    battery_two = Battery(name="two", max_voltage=12.00)
-    battery_two.set_serial_conn(
-        serial.Serial('/dev/ttyACM1', 9600, timeout=100))
-    device_list.append(battery_two)
+#    battery_two = Battery(name="two", max_voltage=12.00)
+#    battery_two.set_serial_conn(
+#        serial.Serial('/dev/ttyACM1', 9600, timeout=100))
+#    device_list.append(battery_two)
     startit()

@@ -24,7 +24,7 @@ class Battery (Device):
 
     def read(self):
         voltage = self.serial_conn.readline().decode().replace('\r\n', '')
-        return "Sensor Reading"
+        return voltage
 
     def write(self, user_input):
         self.input = user_input
