@@ -28,41 +28,8 @@ def on_disconnect(client, userdata, rc):
      client.publish(topic = "edallam/MQTT_Display/text", payload = "This is a test Message")
      print("PUBLISH: Disconnected From Broker")
      client.publish(topic = "edallam/mmsi/boat/status", payload="Offline - Disconnected", qos=0, retain=True) # TODO change to a publish that is with "auth"
-"""
-
-Moved to personal.py
-broker_address = "iot.eclipse.org"
-broker_address = "129.192.70.56"
-MQTT_auth = {'username':"edallam", 'password':"danielhackathon2019"}
-broker_portno = 1883
 
 
-# GET https://api.thingspeak.com/update?api_key=KEBDZO2LBQBJVV1Q&field1=0
-ThingSpeak_Write_API_key = 'KEBDZO2LBQBJVV1Q'
-ThingSpeak_Read_API_key ='5AYRZYT2BB16CBBW'
-ThingSpeak_BaseURL = 'https://api.thingspeak.com/update?'
-"""
-"""
-config = getConfig()
-
-client = mqtt.Client()
-
-#Assigning the object attribute to the Callback Function
-client.will_set("EricssonONE/egarage/IoT_Can/status", payload="Offline - Will", qos=0, retain=True)
-client.username_pw_set(username = "edallam", password = "danielhackathon2019")
-client.on_connect = on_connect
-client.on_disconnect = on_disconnect
-
-client.connect(broker_address, broker_portno)
-
-arduino1 = serial.Serial('/dev/ttyACM0',9600,timeout=100)
-print("Listening to: " + arduino1.name)
-#arduino2 = serial.Serial('/dev/ttyOP_arduino',9600,timeout=10)
-#print("Listening to: " + arduino2.name)
-
-# URL where we will send the data, Don't change it
-baseURL = ThingSpeak_BaseURL + 'api_key=%s' % ThingSpeak_Write_API_key
-"""
 # States and Global variables
 # BATTERY1
 battery1_lastReportedValue = 0.0
@@ -290,71 +257,27 @@ def publish_door(data):
 ##################################################################
 # Other functions
 ##################################################################
-
 def startwith(line,tag):
     if tag in line[0:9]:
         return True
     else:
         return False
 
-def send2ThingSpeak():
-    global ThingSpeak_reportingCounter
-    global ThingSpeak_unreportedChange
-    global field1_str
-    global field2_str
-    global field3_str
-    global field4_str
-    global field5_str
-    global field6_str
-    global field7_str
-    global field8_str
-    global baseURL
-    """
-    field1_str = ''
-    field2_str = ''
-    field3_str = ''
-    field4_str = ''
-    field5_str = ''
-    field6_str = ''
-    field7_str = ''
-    field8_str = ''
-    """
-    
-    # Somethings has to be sent and we did not just send
-    # or it was long since we sent something
-    if (( ThingSpeak_unreportedChange and ThingSpeak_reportingCounter >= 100) or \
-        (  ThingSpeak_reportingCounter >= 1*36)):
-        # Sending the data to thingspeak
-        field_str = field1_str + field2_str + \
-                    field3_str + field4_str + \
-                    field5_str + field6_str + \
-                    field7_str + field8_str
-
-        config = getConfig()
-
-        # URL where we will send the data, Don't change it
-        baseURL = config.ThingSpeak_BaseURL + 'api_key=%s' % config.ThingSpeak_Write_API_key
-
-        print(baseURL + field_str )
-        conn = urlopen(baseURL + field_str ) # change from str1 to str to publish all
-        print('ThingSpeak publish entry: ' + str(conn.read().decode()))
-        # Closing the connection
-        conn.close()
-        ThingSpeak_unreportedChange = False
-        ThingSpeak_reportingCounter = 0
-        
 ##################################################################
 if __name__ == "__main__":
-    device_list = []
-    #ThingSpeak connection
-    thing_speak = ThingSpeak()
+    #TODO: Create factory for creating device objects?
     #Create Devices
-    battery_one = Battery(name="one", max_voltage=12.80)
+    battery_one = Battery(name="one", field="field1", max_voltage=12.80)
     battery_one.set_serial_conn(
         conn_port='/dev/ttyUSB0', conn_baudrate=9600, conn_timeout=100)
-    device_list.append(battery_one)
-#    battery_two = Battery(name="two", max_voltage=12.00)
-#    battery_two.set_serial_conn(
-#        serial.Serial('/dev/ttyACM1', 9600, timeout=100))
+    battery_one.start()
+    battery_two = Battery(name="two", field="field2", max_voltage=12.00)
+    battery_two.set_serial_conn(
+        conn_port='/dev/ttyUSB1', conn_baudrate=9600, conn_timeout=100)
+    battery_two.start()
+    sleep(120)
+    battery_one.stop()
+    battery_two.stop()
+
 #    device_list.append(battery_two)
-    startit()
+#    startit()
