@@ -28,7 +28,7 @@ else:
 			os.remove('logs/iot_can.log')
 
 		#Start IoT Can
-		os.system('nohup python3 IoT_Can.py > logs/iot_can.log &');
+		os.system('python3 IoT_Can.py > logs/iot_can.log &')
 		print("IoT Can Started. Stop service by giving argument stop.")
 
 	if str(sys.argv[1]) == "stop":
@@ -37,11 +37,13 @@ else:
 		try:
 			unix_socket.connect(server_address)
 		except socket.error:
+			print("Failed to connect to socket")
 			sys.exit(1)
 
 		try:
 			#send message to IoT_Can
-			unix_socket.sendall("stop")
+			message = 'stop'
+			unix_socket.sendall(message.encode())
 		finally:
 			unix_socket.close()
 			print("IoT Can Stopped.")

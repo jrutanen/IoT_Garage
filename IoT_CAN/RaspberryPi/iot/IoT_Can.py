@@ -8,6 +8,7 @@ Example: "EricssonONE/edallam/MQTT_Display/text"
 from urllib.request import urlopen
 import sys
 import socket
+import os
 from time import sleep
 import json 
 import datetime
@@ -20,14 +21,10 @@ from WaterMeter import *
 from ThingSpeak import *
 from constants import *
 
-#list of connected devices
-devices = []
-
-#Unix Domain Socket so we can run the program in the background and
-#stop it with another command
 unix_socket = None
 
 def create_unix_domain_socket():
+    print("Creating a socket")
     # Make sure the socket does not already exist
     try:
         os.unlink(server_address)
@@ -36,17 +33,21 @@ def create_unix_domain_socket():
             raise
 
     unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    print("Socket created")
     unix_socket.bind(server_address)
     unix_socket.listen(1)
+    print("Listening to socket")
+    return unix_socket
 
-def check_socket_connectio():
+def check_socket_connection(unix_socket):
     connection, client_address = unix_socket.accept()
     try:
-        # Receive the data in small chunks and retransmit it
-        while True:
-            data = connection.recv(16)
-            if data == "stop":
-                stop_iot_can()
+        data = connection.recv(16)
+        message = data.decode()
+        print("Message received: " + message)
+
+        if message == "stop":
+            stop_iot_can()
     finally:
         # Clean up the connection
         connection.close()
@@ -54,7 +55,8 @@ def check_socket_connectio():
 def stop_iot_can():
     for device in devices:
         device.stop()
-    print("All connected devices stopped")
+    print("All connected devices stopped. Shutting down.")
+    sys.exit(1)
 
 #the callback function
 def on_connect(client, userdata, flags, rc):
@@ -111,15 +113,8 @@ def startit():
 
     client.connect(config.broker_address, config.broker_portno)
 
-
-
     while True:
-        #try:
-        for device in device_list:
-            line = device.read()
-            print(line)
-            send2ThingSpeak()      
-            ThingSpeak_reportingCounter += 1
+        check_socket_connection(unix_socket)
 
 ##################################################################
 # Functions below
@@ -264,8 +259,16 @@ def publish_door(data):
 
 ##################################################################
 if __name__ == "__main__":
+    #Create Unix Domain Socket
+    unix_socket = create_unix_domain_socket()
+
     #ThingSpeak connection
     thing_speak = ThingSpeak()
+
+    #list of connected devices
+    devices = []
+
+    #Add connected devices
     #Add Two Battery Devices and start them
     battery_one = Battery(\
         name="BatteryOne", field="field1", max_voltage=12.80)
@@ -275,7 +278,7 @@ if __name__ == "__main__":
     devices.append(battery_one)
 
     battery_two = Battery(\
-        name="BatteryTwo", field="field2", max_voltage=12.80)
+        name="BatteryTwo", field="field2", max_voltage=11.00)
     battery_two.set_serial_conn(
         conn_port='/dev/ttyUSB1', conn_baudrate=9600, conn_timeout=100)
     battery_two.start(on_data_received)
@@ -288,7 +291,9 @@ if __name__ == "__main__":
     water_meter.start(on_data_received)
     devices.append(water_meter)
 
-    sleep(480)
-    battery_one.stop()
-    battery_two.stop()
-    water_meter.stop()
+    startit()
+
+#    sleep(480)
+#    battery_one.stop()
+#    battery_two.stop()
+#    water_meter.stop()

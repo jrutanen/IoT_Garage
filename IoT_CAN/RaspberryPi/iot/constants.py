@@ -1,5 +1,5 @@
 #Socket server address
-server_address = './uds_socket'
+server_address = './iot_socket'
 
 #Device States
 STOPPED = 0
