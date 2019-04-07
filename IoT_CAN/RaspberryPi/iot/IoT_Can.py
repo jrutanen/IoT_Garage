@@ -271,14 +271,14 @@ if __name__ == "__main__":
     #Add connected devices
     #Add Two Battery Devices and start them
     battery_one = Battery(\
-        name="BatteryOne", field="field1", max_voltage=12.80)
+        name="BatteryOne", field="field1", max_voltage=12.00)
     battery_one.set_serial_conn(
         conn_port='/dev/ttyUSB0', conn_baudrate=9600, conn_timeout=100)
     battery_one.start(on_data_received)
     devices.append(battery_one)
 
     battery_two = Battery(\
-        name="BatteryTwo", field="field2", max_voltage=11.00)
+        name="BatteryTwo", field="field2", max_voltage=12.00)
     battery_two.set_serial_conn(
         conn_port='/dev/ttyUSB1', conn_baudrate=9600, conn_timeout=100)
     battery_two.start(on_data_received)
