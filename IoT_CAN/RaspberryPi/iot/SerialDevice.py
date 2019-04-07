@@ -1,8 +1,8 @@
-from constants import *
 from serial import Serial
 import collections
 import multiprocessing
 import datetime
+from constants import *
 from ThingSpeak import *
 
 class SerialDevice:
@@ -26,6 +26,11 @@ class SerialDevice:
     p = None
     #Alarm level
     alarm_severity = ALARM_NONE
+    #Callback function for reporting measurements
+    callback = None
+    #reporting frequency
+    reporting_freq = 60 #every minute
+    time_of_last_measurement = None
 
     def __init__(self, name, field):
         self.id = name
@@ -45,9 +50,12 @@ class SerialDevice:
                                   baudrate=conn_baudrate,
                                   timeout=conn_timeout)
 
-    def start(self):
+    def start(self, callback):
         """Starts the device. The device starts a process to poll
         the serial port for data.
+
+        Params:
+        callback (function): callback function measurement result
         """
         if self.serial_conn is None:
             print("Serial connection not set. Device can't be started.")
@@ -57,7 +65,9 @@ class SerialDevice:
             print(self.info())
             #set state to RUNNING and start polling process
             self.current_state = RUNNING
+            self.callback = callback
             self.p.start()
+            print(self.id + " started")
 
     def stop(self):
         """Stops the device. Process to poll the serial port is
@@ -66,6 +76,7 @@ class SerialDevice:
         if self.current_state == RUNNING:
             self.current_state == STOPPED
             self.p.terminate()
+            print(self.id + " stopped")
         else:
             print("Device not started yet. Device can't be stopped.")
 
@@ -78,8 +89,18 @@ class SerialDevice:
             value = self.read()
             self.measurements.append(value)
             self.set_alarm_severity(value)
-            self.publish(value)
-            print(self.id + ": " + value)
+            current_time = datetime.datetime.now()
+            if self.time_of_last_measurement is None:
+                self.time_of_last_measurement = current_time
+            time_diff = (current_time-self.time_of_last_measurement)\
+                        .total_seconds()
+            if time_diff == 0\
+                or time_diff >= self.reporting_freq\
+                or self.alarm_severity == ALARM_CRITICAL: 
+                self.callback(\
+                    type(self), self.id, value, self.alarm_severity,\
+                    self.thing_speak_field, self.topic)
+                self.time_of_last_measurement = current_time
 
     def read(self):
         """Command to read data from the device. Shall be overriden

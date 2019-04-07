@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """
 MQTT topics must start with: EricssonONE/esignum/
@@ -7,6 +7,7 @@ Example: "EricssonONE/edallam/MQTT_Display/text"
 
 from urllib.request import urlopen
 import sys
+import socket
 from time import sleep
 import json 
 import datetime
@@ -15,8 +16,45 @@ import paho.mqtt.client as mqtt
 import paho.mqtt.publish as publish
 from personal import *
 from Battery import *
+from WaterMeter import *
 from ThingSpeak import *
+from constants import *
 
+#list of connected devices
+devices = []
+
+#Unix Domain Socket so we can run the program in the background and
+#stop it with another command
+unix_socket = None
+
+def create_unix_domain_socket():
+    # Make sure the socket does not already exist
+    try:
+        os.unlink(server_address)
+    except OSError:
+        if os.path.exists(server_address):
+            raise
+
+    unix_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    unix_socket.bind(server_address)
+    unix_socket.listen(1)
+
+def check_socket_connectio():
+    connection, client_address = unix_socket.accept()
+    try:
+        # Receive the data in small chunks and retransmit it
+        while True:
+            data = connection.recv(16)
+            if data == "stop":
+                stop_iot_can()
+    finally:
+        # Clean up the connection
+        connection.close()
+
+def stop_iot_can():
+    for device in devices:
+        device.stop()
+    print("All connected devices stopped")
 
 #the callback function
 def on_connect(client, userdata, flags, rc):
@@ -28,6 +66,19 @@ def on_disconnect(client, userdata, rc):
      print("PUBLISH: Disconnected From Broker")
      client.publish(topic = "edallam/mmsi/boat/status", payload="Offline - Disconnected", qos=0, retain=True) # TODO change to a publish that is with "auth"
 
+def on_data_received(\
+    object_type, object_id, value, alarm_severity, field, topic):
+    if object_type == Battery:
+        print("do some battery stuff")
+    if object_type == WaterMeter:
+        print("do some water meter stuff")
+    print(object_id, value, alarm_severity)
+    thing_speak.publish(field, value)
+    if alarm_severity > ALARM_NONE:
+        on_alarm(object_type, object_id, value, alarm_severity)
+
+def on_alarm(object_type, object_id, value, alarm_severity):
+    print(str(alarm_severity) + " alarm received from " + object_id)
 
 # States and Global variables
 # BATTERY1
@@ -213,16 +264,31 @@ def publish_door(data):
 
 ##################################################################
 if __name__ == "__main__":
-    #TODO: Create factory for creating device objects?
-    #Create Two Battery Devices and start them
-    battery_one = Battery(name="one", field="field1", max_voltage=12.80)
+    #ThingSpeak connection
+    thing_speak = ThingSpeak()
+    #Add Two Battery Devices and start them
+    battery_one = Battery(\
+        name="BatteryOne", field="field1", max_voltage=12.80)
     battery_one.set_serial_conn(
         conn_port='/dev/ttyUSB0', conn_baudrate=9600, conn_timeout=100)
-    battery_one.start()
-    battery_two = Battery(name="two", field="field2", max_voltage=12.00)
+    battery_one.start(on_data_received)
+    devices.append(battery_one)
+
+    battery_two = Battery(\
+        name="BatteryTwo", field="field2", max_voltage=12.80)
     battery_two.set_serial_conn(
         conn_port='/dev/ttyUSB1', conn_baudrate=9600, conn_timeout=100)
-    battery_two.start()
-    sleep(240)
+    battery_two.start(on_data_received)
+    devices.append(battery_two)
+
+    #Add Water Meter and start it
+    water_meter = WaterMeter(name="WaterOne", field="field3")
+    water_meter.set_serial_conn(
+        conn_port='/dev/ttyUSB2', conn_baudrate=9600, conn_timeout=100)
+    water_meter.start(on_data_received)
+    devices.append(water_meter)
+
+    sleep(480)
     battery_one.stop()
     battery_two.stop()
+    water_meter.stop()

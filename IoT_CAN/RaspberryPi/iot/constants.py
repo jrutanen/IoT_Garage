@@ -1,3 +1,6 @@
+#Socket server address
+server_address = './uds_socket'
+
 #Device States
 STOPPED = 0
 RUNNING = 1

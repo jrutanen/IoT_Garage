@@ -10,9 +10,9 @@ class Battery (SerialDevice):
     time_published = None
     #ThingSpeak won't be updated until min_publish_freq seconds has
     #passed but will be updated latest every max_publish_feq
-    min_publish_freq = 30
-    max_publish_freq = 15
-    diff = 0.1
+    min_publish_freq = 120 #every two minutes
+    max_publish_freq = 60 #every minute
+    diff = 0.2
 
     def __init__(self, max_voltage, **kwds):
         super(Battery, self).__init__(**kwds)
@@ -34,7 +34,7 @@ class Battery (SerialDevice):
         Parameters:
         value (string): raw data from the serial port as string
        """
-        value = float(value.split(";")[0])
+        value = float(value) #value.split(";")[0])
         if value > 0.95*self.max_voltage:
             self.alarm_severity = ALARM_NONE
         elif value > 0.94*self.max_voltage:
