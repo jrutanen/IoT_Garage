@@ -52,7 +52,7 @@ class Mqtt:
                         retain=True) #TODO: change to a publish with "auth"
 
 
-    def publish(self, device, value):
+    def publish(self, device, value, topic=""):
         """Sends update data to the MQTT server
 
         Parameters:
@@ -61,9 +61,10 @@ class Mqtt:
         """
         if device == 'DISPLAY':
             topic = 'MQTT_Display/text'
-            self.publish_mqtt_display(topic, value)
 
-    def publish_mqtt_display(self, topic, payload):
+        self.publish_mqtt(topic, value)
+
+    def publish_mqtt(self, topic, payload):
         egarageTopic = "EricssonONE/egarage/{}".format(topic)
         publish.single(\
         topic = egarageTopic, \

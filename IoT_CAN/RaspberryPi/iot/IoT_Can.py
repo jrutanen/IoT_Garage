@@ -80,27 +80,27 @@ def process_trash_can_data(object_id, value, alarm_severity):
     if value[0] == "Temp":
         data = value[1]
         thing_speak.publish("field2", data)
+        mqtt.publish("DATA", data, "IoT_Can/3/temp")
         if alarm_severity == ALARM_CRITICAL:
             mqtt.publish("DISPLAY", "Warning: Freezing temp!")
     elif value[0] == "Distance":
         data = value[1]
         thing_speak.publish("field1", data)
+        mqtt.publish("DATA", data, "IoT_Can/3/trashlevel")        
         if alarm_severity == ALARM_CRITICAL:
             mqtt.publish("DISPLAY", "Trashcan is almost full!")
     elif value[0] == "Lock":
         data = value[1]
         thing_speak.publish("field3", data)
+        mqtt.publish("DATA", data, "IoT_Can/3/3/1/toilet")
         if alarm_severity == ALARM_CRITICAL:
             mqtt.publish("DISPLAY", "Toilet: Occupied!")
         else:
             mqtt.publish("DISPLAY", "Toilet: Free!")            
 
-
 def startit():
     while True:
         check_socket_connection(unix_socket)
-
-
 
 def stop_iot_can():
     for device in devices:
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     trashcan_one = TrashCan(\
         name="ThrashCan", field="field2",)
     trashcan_one.set_serial_conn(
-        conn_port='/dev/ttyUSB3', conn_baudrate=9600, conn_timeout=100)
+        conn_port='/dev/ttyUSB1', conn_baudrate=9600, conn_timeout=100)
     trashcan_one.start(on_data_received)
     devices.append(trashcan_one)
 
