@@ -67,7 +67,7 @@ class TrashCan (SerialDevice):
         return ALARM_CRITICAL
 
     def set_alarm_severity_distance(self, value):
-        value = int(value)
+        value = float(value)
         if value > 90:
             return ALARM_CRITICAL
         elif value > 80:

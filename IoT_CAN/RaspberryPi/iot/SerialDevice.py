@@ -136,6 +136,9 @@ class SerialDevice:
         """
         return None
 
+    def set_reporting_frequency(self, frequency):
+        self.reporting_freq = frequency
+
     def info(self):
         """Information about the device
         

@@ -16,8 +16,8 @@ class Mqtt:
         client = mqtt.Client()
 
         #Assigning the object attribute to the Callback Function
-        client.will_set("edallam/mmsi/boat/status",\
-                         payload="Offline - Will",\
+        client.will_set("EricssonONE/egarage/IoT_Can/status",\
+                         payload="Offline",\
                          qos=0,\
                          retain=True)
 
@@ -47,7 +47,7 @@ class Mqtt:
                         payload = "IoT_Can disconnected")
          print("PUBLISH: Disconnected From Broker")
          client.publish(topic = "EricssonONE/egarage/IoT_Can/status",\
-                        payload="Offline - Disconnected",\
+                        payload="Offline",\
                         qos=0,
                         retain=True) #TODO: change to a publish with "auth"
 

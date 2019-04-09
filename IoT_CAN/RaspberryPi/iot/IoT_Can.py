@@ -133,7 +133,8 @@ if __name__ == "__main__":
     trashcan_one = TrashCan(\
         name="ThrashCan", field="field2",)
     trashcan_one.set_serial_conn(
-        conn_port='/dev/ttyUSB1', conn_baudrate=9600, conn_timeout=100)
+        conn_port='/dev/ttyUSB2', conn_baudrate=9600, conn_timeout=100)
+    trashcan_one.set_reporting_frequency(60)
     trashcan_one.start(on_data_received)
     devices.append(trashcan_one)
 
