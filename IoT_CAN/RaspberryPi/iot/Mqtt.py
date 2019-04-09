@@ -37,20 +37,19 @@ class Mqtt:
     #callback functions
     def on_connect(self, client, userdata, flags, rc):
          print("PUBLISH: Connected With Result Code {}".format(rc))
-         client.publish(topic = "edallam/mmsi/boat/status",\
+         client.publish(topic = "EricssonONE/egarage/IoT_Can/status",\
                         payload="Online",\
                         qos=0,\
                         retain=True) #TODO: change to a publish with "auth"
 
     def on_disconnect(self, client, userdata, rc):
-         client.publish(topic = "edallam/MQTT_Display/text",\
-                        payload = "This is a test Message")
+         client.publish(topic = "EricssonONE/egarage/MQTT_Display/text",\
+                        payload = "IoT_Can disconnected")
          print("PUBLISH: Disconnected From Broker")
-         client.publish(topic = "edallam/mmsi/boat/status",\
+         client.publish(topic = "EricssonONE/egarage/IoT_Can/status",\
                         payload="Offline - Disconnected",\
                         qos=0,
                         retain=True) #TODO: change to a publish with "auth"
-
 
     def publish(self, device, value, topic=""):
         """Sends update data to the MQTT server
